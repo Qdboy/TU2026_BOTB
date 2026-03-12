@@ -1,0 +1,53 @@
+lumber
+plywood
+2x4
+pressure treated wood
+decking
+insulation
+drywall
+paint
+paintbrush
+rollers
+spray paint
+power tools
+drill
+cordless drill
+circular saw
+table saw
+sander
+wrench
+screwdriver
+nails
+screws
+fasteners
+plumbing
+pipe
+faucet
+toilet
+shower
+water heater
+electrical
+outlet
+switch
+circuit breaker
+extension cord
+lighting
+led bulb
+ceiling fan
+recessed lighting
+garden
+soil
+fertilizer
+mulch
+planter
+shovel
+rake
+lawn mower
+patio furniture
+grill
+garage storage
+shelving
+workbench
+cleaning
+vacuum
+pressure washer
