@@ -167,7 +167,7 @@ class QueryProcessor:
                 {"role": "system", "content": self.SYSTEM_PROMPT},
                 {"role": "user", "content": event.query_text},
             ],
-            max_tokens=200,
+            max_tokens=400,
         )
         event.raw_ai_response = rec_response.choices[0].message.content.strip()
 
@@ -180,7 +180,7 @@ class QueryProcessor:
                     "content": self.TAG_PROMPT.format(response=event.raw_ai_response),
                 }
             ],
-            max_tokens=200,
+            max_tokens=400,
         )
         raw_json = tag_response.choices[0].message.content.strip()
         raw_json = re.sub(r"```(?:json)?|```", "", raw_json).strip()
