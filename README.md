@@ -5,7 +5,7 @@ ShopSmart is a Chrome browser extension that captures and analyzes shopping-rela
 
 The extension monitors AI conversations and detects when users ask for product recommendations. When a relevant interaction occurs, ShopSmart captures the prompt and response, stores the interaction locally, and allows the user to review the information through the extension popup.
 
-(Add additional context here if you want to describe the motivation behind the project or the problem the application solves.)
+ShopSmart, a free consumer browser extension that enhances AI shopping  sessions with coupon codes, aggregated product insights, and social video content from social media platforms like  TikTok and Instagram, while capturing anonymized, consented behavioral data from real shopping interactions, is also used to power the intelligence of Shop.py.
 
 ---
 
