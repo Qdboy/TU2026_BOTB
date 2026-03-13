@@ -1,10 +1,12 @@
-// PromptVault - Shop UI Enhancement
-// Transforms AI chat response bubbles when shopping intent is detected.
-// Restyles the response container, reformats product mentions into
-// interactive structured layouts, and makes product names clickable.
+// PromptVault - Shop UI Enhancement v3
+// ADDITIVE approach: never removes or replaces content.
+// Injects an enhanced product panel AFTER the AI response
+// and highlights product names inline with popovers.
 
 (function () {
   "use strict";
+
+  console.log("[PV-ShopUI] Script loaded.");
 
   // ========================================
   // PLATFORM CONFIGS
@@ -84,42 +86,84 @@
     /best .+ (under|for|in) .+/i,
   ];
 
-  function getShoppingScore(text) {
+  function isShoppingRelated(text) {
     const lower = text.toLowerCase();
     let score = 0;
     for (const kw of SHOPPING_KEYWORDS) { if (lower.includes(kw)) score += 1; }
     for (const hint of PRODUCT_HINTS) { if (lower.includes(hint)) score += 2; }
     for (const pattern of SHOPPING_PATTERNS) { if (pattern.test(text)) score += 2; }
-    return score;
-  }
-
-  function isShoppingRelated(text) {
-    return getShoppingScore(text) >= 2;
+    return score >= 2;
   }
 
   // ========================================
-  // PRODUCT EXTRACTION
+  // PRODUCT CATEGORY ICONS
   // ========================================
 
-  function extractProductSections(contentEl) {
-    const sections = [];
+  const CATEGORY_ICONS = {
+    laptop: "💻", phone: "📱", tablet: "📱", monitor: "🖥️",
+    headphones: "🎧", earbuds: "🎧", camera: "📷",
+    tv: "📺", television: "📺", speaker: "🔊",
+    keyboard: "⌨️", mouse: "🖱️",
+    gpu: "🎮", console: "🎮", playstation: "🎮", xbox: "🎮", switch: "🎮",
+    watch: "⌚", smartwatch: "⌚",
+    shoes: "👟", sneakers: "👟", boots: "👢", jacket: "🧥",
+    backpack: "🎒", shirt: "👕", pants: "👖",
+    mattress: "🛏️", desk: "🪑", chair: "🪑",
+    blender: "🍹", microwave: "📡", vacuum: "🧹",
+    car: "🚗", bike: "🚲", scooter: "🛴",
+    drill: "🔧", saw: "🔧", tools: "🔧",
+    house: "🏠", home: "🏠", apartment: "🏢", condo: "🏢",
+  };
+
+  function getProductIcon(name) {
+    const lower = name.toLowerCase();
+    for (const [keyword, icon] of Object.entries(CATEGORY_ICONS)) {
+      if (lower.includes(keyword)) return icon;
+    }
+    return "🛒";
+  }
+
+  // ========================================
+  // PRODUCT IMAGE FETCHING
+  // Uses Google favicon + product search thumbnails
+  // ========================================
+
+  function getProductImageUrl(productName) {
+    // Google Shopping thumbnail via their search
+    const encoded = encodeURIComponent(productName);
+    return `https://www.google.com/search?tbm=isch&q=${encoded}&tbs=isz:m`;
+  }
+
+  // Generate a search-based image URL that actually works in img tags
+  function getProductThumbUrl(productName) {
+    const encoded = encodeURIComponent(productName + " product");
+    // Use a placeholder with the product initial + gradient
+    // Real images would need a backend proxy, but we can make attractive placeholders
+    return null; // We'll use CSS gradient + icon instead
+  }
+
+  // ========================================
+  // PRODUCT EXTRACTION (read-only, no DOM changes)
+  // ========================================
+
+  function extractProducts(contentEl) {
+    const products = [];
     const seen = new Set();
 
-    // Strategy 1: Bold product names — most common AI recommendation format
+    // Strategy 1: Bold product names
     const bolds = contentEl.querySelectorAll("strong, b");
     for (const bold of bolds) {
       const name = cleanName(bold.textContent);
       if (!name || seen.has(name.toLowerCase()) || !looksLikeProduct(name)) continue;
       seen.add(name.toLowerCase());
 
-      // Get the containing block (li, p, or parent)
       const block = bold.closest("li") || bold.closest("p") || bold.parentElement;
       const ctx = parseContext(block, bold);
 
-      sections.push({
+      products.push({
         name,
+        icon: getProductIcon(name),
         element: bold,
-        block,
         description: ctx.description,
         specs: ctx.specs,
         priceRange: ctx.priceRange,
@@ -127,7 +171,7 @@
     }
 
     // Strategy 2: List items with product-like headings
-    if (sections.length === 0) {
+    if (products.length === 0) {
       const items = contentEl.querySelectorAll("li");
       for (const li of items) {
         const text = li.textContent.trim();
@@ -137,13 +181,11 @@
         if (!name || seen.has(name.toLowerCase()) || !looksLikeProduct(name)) continue;
         seen.add(name.toLowerCase());
 
-        const rest = text.slice(match[0].length);
-        const ctx = parseContextText(rest);
-
-        sections.push({
+        const ctx = parseContextText(text.slice(match[0].length));
+        products.push({
           name,
+          icon: getProductIcon(name),
           element: null,
-          block: li,
           description: ctx.description,
           specs: ctx.specs,
           priceRange: ctx.priceRange,
@@ -151,7 +193,7 @@
       }
     }
 
-    return sections;
+    return products;
   }
 
   function parseContext(block, boldEl) {
@@ -162,7 +204,6 @@
 
   function parseContextText(text) {
     const clean = text.replace(/^[\s:—–\-]+/, "").trim();
-
     const priceMatch = clean.match(/\$[\d,]+(?:\s*[-–—to]+\s*\$[\d,]+)?/);
     const priceRange = priceMatch ? priceMatch[0] : null;
 
@@ -181,7 +222,7 @@
 
     let description = clean;
     if (priceRange) description = description.replace(priceMatch[0], "").trim();
-    if (description.length > 180) description = description.slice(0, 177) + "...";
+    if (description.length > 160) description = description.slice(0, 157) + "...";
 
     return { description: description || null, specs: specs.length ? specs : null, priceRange };
   }
@@ -203,24 +244,21 @@
   }
 
   // ========================================
-  // UI TRANSFORMATION
+  // UI BUILDING (additive — never replaces)
   // ========================================
 
   /**
-   * Apply shopping mode to the entire response container.
+   * Apply shopping mode styling to response wrapper.
+   * Adds banner at top of content.
    */
-  function transformResponse(responseEl, contentEl, promptText) {
-    // Find the wrapper we want to restyle
-    // On ChatGPT this is the closest article or turn container
+  function styleResponse(responseEl, contentEl) {
     const wrapper = responseEl.closest("article")
       || responseEl.closest('[data-testid^="conversation-turn"]')
       || responseEl.closest(".group")
       || responseEl;
 
-    // Mark it as shopping mode
     wrapper.classList.add("pv-shopping-mode");
 
-    // Inject the shopping mode banner at the top of the content
     const banner = document.createElement("div");
     banner.className = "pv-mode-banner";
     banner.innerHTML = `
@@ -233,113 +271,152 @@
       <span class="pv-mode-text">Shopping Mode</span>
     `;
     contentEl.insertBefore(banner, contentEl.firstChild);
-
-    return wrapper;
   }
 
   /**
-   * Transform product bold text into interactive inline elements.
-   * Rewrites the bold elements in-place.
+   * Highlight product names inline — wraps them in a styled span
+   * WITHOUT removing or replacing the original element.
    */
-  function transformProductInline(boldEl, product) {
-    const encoded = encodeURIComponent(product.name);
+  function highlightProductInline(boldEl, product) {
+    // Don't replace — just add a class and a data attribute
+    boldEl.classList.add("pv-product-highlight");
+    boldEl.setAttribute("data-pv-product", product.name);
+    boldEl.setAttribute("data-pv-price", product.priceRange || "");
+    boldEl.setAttribute("data-pv-icon", product.icon);
 
-    // Create the interactive product chip
-    const chip = document.createElement("span");
-    chip.className = "pv-product-chip";
-    chip.textContent = product.name;
+    // Add click to scroll to card
+    boldEl.style.cursor = "pointer";
+    boldEl.addEventListener("click", () => {
+      const card = document.querySelector(`.pv-card[data-product="${CSS.escape(product.name)}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.add("pv-card-flash");
+        setTimeout(() => card.classList.remove("pv-card-flash"), 1200);
+      }
+    });
+  }
 
-    // Build the hover popover
-    const popover = document.createElement("div");
-    popover.className = "pv-product-popover";
+  /**
+   * Build and inject the product showcase panel AFTER the response.
+   */
+  function injectProductPanel(contentEl, products) {
+    const panel = document.createElement("div");
+    panel.className = "pv-panel";
 
-    let popoverInner = `<div class="pv-pop-name">${esc(product.name)}</div>`;
-
-    if (product.priceRange) {
-      popoverInner += `<div class="pv-pop-price">${esc(product.priceRange)}</div>`;
-    }
-
-    if (product.specs?.length) {
-      popoverInner += `<div class="pv-pop-specs">${product.specs.map((s) => `<span class="pv-pop-spec">${esc(s)}</span>`).join("")}</div>`;
-    }
-
-    popoverInner += `
-      <div class="pv-pop-links">
-        <a href="https://www.amazon.com/s?k=${encoded}" target="_blank" rel="noopener">Amazon</a>
-        <a href="https://www.google.com/search?tbm=shop&q=${encoded}" target="_blank" rel="noopener">Google</a>
-        <a href="https://www.bestbuy.com/site/searchpage.jsp?st=${encoded}" target="_blank" rel="noopener">Best Buy</a>
-        <a href="https://www.google.com/search?q=${encoded}+review" target="_blank" rel="noopener">Reviews</a>
+    // Panel header
+    const header = document.createElement("div");
+    header.className = "pv-panel-header";
+    header.innerHTML = `
+      <div class="pv-panel-header-left">
+        <span class="pv-panel-logo">PV</span>
+        <span class="pv-panel-title">Products mentioned</span>
+        <span class="pv-panel-count">${products.length}</span>
       </div>
+      <button class="pv-panel-toggle" aria-label="Toggle">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     `;
 
-    popover.innerHTML = popoverInner;
-    chip.appendChild(popover);
+    // Panel body
+    const body = document.createElement("div");
+    body.className = "pv-panel-body";
 
-    // Replace the bold element with our chip
-    boldEl.replaceWith(chip);
-  }
+    // Product cards
+    const grid = document.createElement("div");
+    grid.className = "pv-card-grid";
 
-  /**
-   * Transform list items that contain products into structured cards.
-   */
-  function transformProductList(contentEl, sections) {
-    // Find all list items that contain products and group by their parent <ul>/<ol>
-    const listsToTransform = new Map();
+    products.forEach((product, i) => {
+      const encoded = encodeURIComponent(product.name);
+      const card = document.createElement("div");
+      card.className = "pv-card";
+      card.setAttribute("data-product", product.name);
+      card.style.animationDelay = `${i * 0.06}s`;
 
-    for (const section of sections) {
-      if (!section.block || section.block.tagName !== "LI") continue;
-      const parentList = section.block.parentElement;
-      if (!parentList) continue;
+      // Generate a color from product name for the gradient
+      const hue = hashString(product.name) % 360;
 
-      if (!listsToTransform.has(parentList)) {
-        listsToTransform.set(parentList, []);
-      }
-      listsToTransform.get(parentList).push(section);
-    }
-
-    // Replace each product list with a structured grid
-    for (const [listEl, products] of listsToTransform) {
-      if (products.length < 2) continue; // Only transform lists with 2+ products
-
-      const grid = document.createElement("div");
-      grid.className = "pv-product-grid";
-
-      for (const product of products) {
-        const encoded = encodeURIComponent(product.name);
-        const card = document.createElement("div");
-        card.className = "pv-grid-card";
-
-        let cardHtml = `
-          <div class="pv-grid-header">
-            <span class="pv-grid-name">${esc(product.name)}</span>
-            ${product.priceRange ? `<span class="pv-grid-price">${esc(product.priceRange)}</span>` : ""}
-          </div>
-        `;
-
-        if (product.description) {
-          cardHtml += `<p class="pv-grid-desc">${esc(product.description)}</p>`;
-        }
-
-        if (product.specs?.length) {
-          cardHtml += `<div class="pv-grid-specs">${product.specs.map((s) => `<span class="pv-grid-spec">${esc(s)}</span>`).join("")}</div>`;
-        }
-
-        cardHtml += `
-          <div class="pv-grid-links">
-            <a href="https://www.amazon.com/s?k=${encoded}" target="_blank" rel="noopener">Amazon</a>
-            <a href="https://www.google.com/search?tbm=shop&q=${encoded}" target="_blank" rel="noopener">Google</a>
-            <a href="https://www.bestbuy.com/site/searchpage.jsp?st=${encoded}" target="_blank" rel="noopener">Best Buy</a>
-            <a href="https://www.google.com/search?q=${encoded}+review" target="_blank" rel="noopener">Reviews</a>
-          </div>
-        `;
-
-        card.innerHTML = cardHtml;
-        grid.appendChild(card);
+      let specsHtml = "";
+      if (product.specs?.length) {
+        specsHtml = `<div class="pv-card-specs">${product.specs.map((s) => `<span class="pv-card-spec">${esc(s)}</span>`).join("")}</div>`;
       }
 
-      // Replace the original list with the grid
-      listEl.replaceWith(grid);
+      card.innerHTML = `
+        <div class="pv-card-visual" style="background: linear-gradient(135deg, hsl(${hue}, 45%, 92%), hsl(${(hue + 30) % 360}, 40%, 95%));">
+          <span class="pv-card-emoji">${product.icon}</span>
+          ${product.priceRange ? `<span class="pv-card-price-badge">${esc(product.priceRange)}</span>` : ""}
+        </div>
+        <div class="pv-card-content">
+          <h3 class="pv-card-name">${esc(product.name)}</h3>
+          ${product.description ? `<p class="pv-card-desc">${esc(product.description)}</p>` : ""}
+          ${specsHtml}
+          <div class="pv-card-actions">
+            <a href="https://www.amazon.com/s?k=${encoded}" class="pv-card-btn pv-card-btn-primary" target="_blank" rel="noopener">
+              Amazon
+            </a>
+            <a href="https://www.google.com/search?tbm=shop&q=${encoded}" class="pv-card-btn" target="_blank" rel="noopener">
+              Google
+            </a>
+            <a href="https://www.bestbuy.com/site/searchpage.jsp?st=${encoded}" class="pv-card-btn" target="_blank" rel="noopener">
+              Best Buy
+            </a>
+            <a href="https://www.google.com/search?q=${encoded}+review" class="pv-card-btn" target="_blank" rel="noopener">
+              Reviews
+            </a>
+          </div>
+        </div>
+      `;
+
+      // Add image search link as a small icon in the visual area
+      const imgLink = document.createElement("a");
+      imgLink.href = `https://www.google.com/search?tbm=isch&q=${encoded}+product`;
+      imgLink.target = "_blank";
+      imgLink.rel = "noopener";
+      imgLink.className = "pv-card-img-link";
+      imgLink.title = "Search images";
+      imgLink.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+      card.querySelector(".pv-card-visual").appendChild(imgLink);
+
+      grid.appendChild(card);
+    });
+
+    body.appendChild(grid);
+
+    // Quick compare bar (2-4 products only, keeps it tight)
+    if (products.length >= 2 && products.length <= 4) {
+      const compare = document.createElement("div");
+      compare.className = "pv-compare-bar";
+
+      let compareHtml = `<div class="pv-compare-title">Quick compare</div><div class="pv-compare-chips">`;
+
+      products.forEach((p) => {
+        const enc = encodeURIComponent(p.name);
+        const shortName = p.name.length > 25 ? p.name.slice(0, 23) + "..." : p.name;
+        compareHtml += `
+          <a href="https://www.google.com/search?tbm=shop&q=${enc}" class="pv-compare-chip" target="_blank" rel="noopener">
+            <span class="pv-compare-chip-icon">${p.icon}</span>
+            <span class="pv-compare-chip-name">${esc(shortName)}</span>
+            ${p.priceRange ? `<span class="pv-compare-chip-price">${esc(p.priceRange)}</span>` : ""}
+          </a>`;
+      });
+
+      compareHtml += `</div>`;
+      compare.innerHTML = compareHtml;
+      body.appendChild(compare);
     }
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+
+    // Toggle collapse
+    header.querySelector(".pv-panel-toggle").addEventListener("click", () => {
+      panel.classList.toggle("pv-panel-collapsed");
+    });
+
+    // Inject after the content element
+    const insertTarget = contentEl.parentElement || contentEl;
+    insertTarget.parentNode.insertBefore(panel, insertTarget.nextSibling);
   }
 
   function esc(str) {
@@ -348,8 +425,16 @@
     return d.innerHTML;
   }
 
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+  }
+
   // ========================================
-  // RESPONSE STABILITY DETECTOR
+  // RESPONSE STABILITY
   // ========================================
 
   function waitForStable(el, stableMs = 1500) {
@@ -370,6 +455,7 @@
 
   const hostname = window.location.hostname.replace("www.", "");
   const platformKey = Object.keys(PLATFORMS).find((k) => hostname.includes(k));
+  console.log(`[PV-ShopUI] Hostname: ${hostname}, Platform: ${platformKey || "none"}`);
   if (!platformKey) return;
 
   const platform = PLATFORMS[platformKey];
@@ -391,45 +477,40 @@
       const promptText = promptTexts[index];
       if (!promptText || !isShoppingRelated(promptText)) return;
 
+      console.log(`[PV-ShopUI] Shopping detected: "${promptText.slice(0, 50)}..."`);
       processed.add(el);
 
-      // Find the content rendering area
       let contentEl = el;
       if (platform.contentSelector !== platform.responseSelector) {
-        // For ChatGPT, look for .markdown inside the response turn
         const parent = el.closest('[data-testid^="conversation-turn"]') || el.parentElement;
         contentEl = parent?.querySelector(platform.contentSelector) || el;
       }
 
       waitForStable(contentEl).then((stableEl) => {
         if (!stableEl) return;
-
-        // Already transformed?
         if (stableEl.querySelector(".pv-mode-banner")) return;
 
-        const sections = extractProductSections(stableEl);
-        if (sections.length === 0) {
-          console.log("[PV-ShopUI] Shopping detected but no products found. Applying style only.");
+        const products = extractProducts(stableEl);
+
+        // 1. Style the response wrapper + add banner
+        styleResponse(el, stableEl);
+
+        if (products.length === 0) {
+          console.log("[PV-ShopUI] Shopping mode applied, no products to showcase.");
+          return;
         }
 
-        // 1. Transform the response wrapper (restyle bubble)
-        transformResponse(el, stableEl, promptText);
-
-        // 2. Transform product list items into structured cards
-        if (sections.length >= 2) {
-          transformProductList(stableEl, sections);
-        }
-
-        // 3. Transform remaining bold product names into interactive chips
-        // (must run after list transform since list transform may remove some elements)
-        const remainingSections = extractProductSections(stableEl);
-        for (const section of remainingSections) {
-          if (section.element && section.element.isConnected) {
-            transformProductInline(section.element, section);
+        // 2. Highlight product names inline (non-destructive)
+        for (const product of products) {
+          if (product.element && product.element.isConnected) {
+            highlightProductInline(product.element, product);
           }
         }
 
-        console.log(`[PV-ShopUI] Transformed response: ${sections.length} product(s) found`);
+        // 3. Inject product panel AFTER the response
+        injectProductPanel(stableEl, products);
+
+        console.log(`[PV-ShopUI] Enhanced: ${products.length} product(s) showcased.`);
       });
     });
   }
@@ -443,7 +524,7 @@
     const observer = new MutationObserver(() => scanAndTransform());
     observer.observe(container, { childList: true, subtree: true });
     scanAndTransform();
-    console.log(`[PV-ShopUI] Active on ${platform.name}. Watching for shopping responses...`);
+    console.log(`[PV-ShopUI] Active on ${platform.name}.`);
   }
 
   if (document.readyState === "loading") {

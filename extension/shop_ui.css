@@ -1,291 +1,530 @@
-/* PromptVault - Shopping UI Transformation
-   Restyles AI chat responses when shopping intent is detected.
-   All selectors prefixed with .pv- to avoid host page collisions. */
+/* PromptVault - Shopping UI Enhancement v3
+   ADDITIVE design — enhances without removing.
+   No external fonts (CSP blocked).
+   All selectors prefixed with .pv- */
 
 /* ========================================
    SHOPPING MODE — RESPONSE WRAPPER
-   Applied to the entire response turn/article
    ======================================== */
 
 .pv-shopping-mode {
   position: relative;
-  background: linear-gradient(168deg, rgba(0, 245, 160, 0.03) 0%, rgba(0, 200, 255, 0.02) 50%, transparent 100%) !important;
-  border-left: 3px solid rgba(0, 245, 160, 0.4) !important;
-  border-radius: 6px !important;
-  padding-left: 12px !important;
-  transition: all 0.3s ease;
-}
-
-.pv-shopping-mode::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(0, 245, 160, 0.3), rgba(0, 200, 255, 0.2), transparent);
+  background: linear-gradient(168deg, rgba(16, 163, 127, 0.05) 0%, rgba(59, 130, 246, 0.03) 40%, transparent 80%) !important;
+  border-left: 3px solid #10a37f !important;
+  border-radius: 4px !important;
+  margin-left: -4px !important;
+  padding-left: 16px !important;
 }
 
 /* ========================================
    SHOPPING MODE BANNER
-   Sits at top of the response content
    ======================================== */
 
 .pv-mode-banner {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px 4px 8px;
-  margin-bottom: 12px;
-  background: rgba(0, 245, 160, 0.08);
-  border: 1px solid rgba(0, 245, 160, 0.15);
-  border-radius: 20px;
+  padding: 5px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #e6f7f2, #dbeafe);
+  border: 1px solid rgba(16, 163, 127, 0.25);
+  border-radius: 100px;
   animation: pvFadeIn 0.3s ease;
 }
 
 .pv-mode-icon {
   display: flex;
   align-items: center;
-  color: #00f5a0;
+  color: #10a37f;
 }
 
 .pv-mode-text {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #00f5a0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #0d8a6a;
 }
 
 /* ========================================
-   PRODUCT CHIPS — Inline interactive names
-   Replace <strong> product names in-place
+   INLINE PRODUCT HIGHLIGHTS
+   Non-destructive — just adds styling to bold elements
    ======================================== */
 
-.pv-product-chip {
-  position: relative;
-  display: inline;
-  color: #00e09a;
-  font-weight: 700;
-  border-bottom: 2px solid rgba(0, 245, 160, 0.3);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  padding-bottom: 1px;
+.pv-product-highlight {
+  color: #0d7c66 !important;
+  background: linear-gradient(to bottom, transparent 60%, rgba(16, 163, 127, 0.15) 60%) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border-radius: 2px !important;
+  padding: 0 2px !important;
 }
 
-.pv-product-chip:hover {
-  color: #00f5a0;
-  border-bottom-color: #00f5a0;
-  text-shadow: 0 0 12px rgba(0, 245, 160, 0.2);
-}
-
-/* ---- Popover on hover ---- */
-
-.pv-product-popover {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 280px;
-  background: #151520;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-  z-index: 10000;
-  font-weight: 400;
-  animation: pvPopIn 0.15s ease;
-  pointer-events: auto;
-}
-
-.pv-product-chip:hover .pv-product-popover {
-  display: block;
-}
-
-/* Popover arrow */
-.pv-product-popover::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: #151520;
-}
-
-.pv-pop-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e8e8f0;
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-
-.pv-pop-price {
-  font-size: 15px;
-  font-weight: 800;
-  color: #00f5a0;
-  margin-bottom: 8px;
-}
-
-.pv-pop-specs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-
-.pv-pop-spec {
-  font-size: 10px;
-  font-weight: 600;
-  color: #7dccff;
-  background: rgba(0, 200, 255, 0.08);
-  border: 1px solid rgba(0, 200, 255, 0.12);
-  padding: 2px 7px;
-  border-radius: 4px;
-}
-
-.pv-pop-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.pv-pop-links a {
-  font-size: 11px;
-  font-weight: 600;
-  color: #8a8aaa;
-  text-decoration: none;
-  padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.02);
-  transition: all 0.15s ease;
-}
-
-.pv-pop-links a:hover {
-  color: #e8e8f0;
-  background: rgba(0, 245, 160, 0.1);
-  border-color: rgba(0, 245, 160, 0.25);
+.pv-product-highlight:hover {
+  background: rgba(16, 163, 127, 0.12) !important;
+  color: #065f46 !important;
 }
 
 /* ========================================
-   PRODUCT GRID — Replaces <ul>/<ol> lists
+   PRODUCT PANEL — Injected AFTER response
    ======================================== */
 
-.pv-product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+.pv-panel {
+  margin: 20px 0 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  animation: pvSlideUp 0.35s ease;
+}
+
+.pv-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #f0fdf4, #eff6ff);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pv-panel-header-left {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin: 14px 0;
 }
 
-.pv-grid-card {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 11px;
+.pv-panel-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #10a37f, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.pv-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pv-panel-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.pv-panel-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 5px 7px;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.pv-panel-toggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #374151;
+}
+
+.pv-panel-collapsed .pv-panel-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.pv-panel-body {
+  padding: 18px;
+  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+}
+
+.pv-panel-collapsed .pv-panel-body {
+  max-height: 0;
+  padding: 0 18px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* ========================================
+   PRODUCT CARD GRID
+   ======================================== */
+
+.pv-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+/* ========================================
+   PRODUCT CARD
+   ======================================== */
+
+.pv-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+  animation: pvSlideUp 0.35s ease forwards;
+  opacity: 0;
+}
+
+.pv-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(16, 163, 127, 0.12), 0 0 0 1px rgba(16, 163, 127, 0.2);
+}
+
+.pv-card-flash {
+  animation: pvFlash 1.2s ease !important;
+  opacity: 1 !important;
+}
+
+/* Visual header — gradient + emoji + price badge */
+.pv-card-visual {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.pv-card-emoji {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.pv-card-price-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid #fde68a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.pv-card-img-link {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  color: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: flex;
+}
+
+.pv-card-img-link:hover {
+  color: rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Card content */
+.pv-card-content {
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  animation: pvSlideUp 0.3s ease forwards;
-  opacity: 0;
+  flex: 1;
 }
 
-.pv-grid-card:nth-child(1) { animation-delay: 0s; }
-.pv-grid-card:nth-child(2) { animation-delay: 0.05s; }
-.pv-grid-card:nth-child(3) { animation-delay: 0.1s; }
-.pv-grid-card:nth-child(4) { animation-delay: 0.15s; }
-.pv-grid-card:nth-child(5) { animation-delay: 0.2s; }
-.pv-grid-card:nth-child(6) { animation-delay: 0.25s; }
-
-.pv-grid-card:hover {
-  border-color: rgba(0, 245, 160, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 16px rgba(0, 245, 160, 0.03);
-}
-
-.pv-grid-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.pv-grid-name {
+.pv-card-name {
   font-size: 14px;
   font-weight: 700;
-  color: #e8e8f0;
+  color: #111827;
   line-height: 1.3;
-  letter-spacing: -0.2px;
+  margin: 0;
 }
 
-.pv-grid-price {
-  font-size: 14px;
-  font-weight: 800;
-  color: #00f5a0;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.pv-grid-desc {
+.pv-card-desc {
   font-size: 12px;
-  color: #7a7a9a;
-  line-height: 1.5;
+  color: #6b7280;
+  line-height: 1.55;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.pv-grid-specs {
+/* Spec tags */
+.pv-card-specs {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.pv-grid-spec {
+.pv-card-spec {
+  font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 10px;
   font-weight: 600;
-  color: #7dccff;
-  background: rgba(0, 200, 255, 0.08);
-  border: 1px solid rgba(0, 200, 255, 0.12);
-  padding: 2px 7px;
+  color: #0d7c66;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
   border-radius: 4px;
 }
 
-.pv-grid-links {
+/* Action buttons */
+.pv-card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
 }
 
-.pv-grid-links a {
+.pv-card-btn {
   font-size: 11px;
   font-weight: 600;
-  color: #8a8aaa;
+  color: #374151;
   text-decoration: none;
-  padding: 4px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  background: #fff;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.pv-grid-links a:hover {
-  color: #e8e8f0;
-  background: rgba(0, 245, 160, 0.1);
-  border-color: rgba(0, 245, 160, 0.25);
+.pv-card-btn:hover {
+  background: #f0fdf4;
+  border-color: #10a37f;
+  color: #065f46;
 }
+
+.pv-card-btn-primary {
+  background: #10a37f;
+  border-color: #10a37f;
+  color: #fff;
+}
+
+.pv-card-btn-primary:hover {
+  background: #0d8a6a;
+  border-color: #0d8a6a;
+  color: #fff;
+}
+
+/* Reviews button — amber accent */
+.pv-card-btn:last-child {
+  color: #92400e;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.pv-card-btn:last-child:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+
+/* ========================================
+   QUICK COMPARE — Chip layout
+   ======================================== */
+
+.pv-compare-bar {
+  margin-top: 18px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+}
+
+.pv-compare-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.pv-compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pv-compare-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  flex: 1;
+  min-width: 140px;
+}
+
+.pv-compare-chip:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.pv-compare-chip-icon {
+  font-size: 18px;
+}
+
+.pv-compare-chip-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  flex: 1;
+}
+
+.pv-compare-chip-price {
+  font-size: 12px;
+  font-weight: 800;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* ========================================
+   DARK MODE
+   ======================================== */
+
+html.dark .pv-shopping-mode,
+.dark .pv-shopping-mode {
+  background: linear-gradient(168deg, rgba(16, 163, 127, 0.06) 0%, rgba(59, 130, 246, 0.03) 40%, transparent 80%) !important;
+  border-left-color: #34d399 !important;
+}
+
+html.dark .pv-mode-banner,
+.dark .pv-mode-banner {
+  background: rgba(16, 163, 127, 0.1);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+html.dark .pv-mode-text,
+.dark .pv-mode-text { color: #34d399; }
+
+html.dark .pv-mode-icon,
+.dark .pv-mode-icon { color: #34d399; }
+
+html.dark .pv-product-highlight,
+.dark .pv-product-highlight {
+  color: #34d399 !important;
+  background: linear-gradient(to bottom, transparent 60%, rgba(52, 211, 153, 0.15) 60%) !important;
+}
+
+html.dark .pv-product-highlight:hover,
+.dark .pv-product-highlight:hover {
+  background: rgba(52, 211, 153, 0.12) !important;
+  color: #6ee7b7 !important;
+}
+
+html.dark .pv-panel,
+.dark .pv-panel {
+  background: #1e1e1e;
+  border-color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .pv-panel-header,
+.dark .pv-panel-header {
+  background: linear-gradient(135deg, rgba(16, 163, 127, 0.08), rgba(59, 130, 246, 0.05));
+  border-bottom-color: #333;
+}
+
+html.dark .pv-panel-title,
+.dark .pv-panel-title { color: #e5e7eb; }
+
+html.dark .pv-panel-count,
+.dark .pv-panel-count { color: #fbbf24; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); }
+
+html.dark .pv-panel-toggle,
+.dark .pv-panel-toggle { background: rgba(255, 255, 255, 0.05); border-color: #444; color: #9ca3af; }
+
+html.dark .pv-card,
+.dark .pv-card { background: #252525; border-color: #333; }
+
+html.dark .pv-card:hover,
+.dark .pv-card:hover { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(52, 211, 153, 0.25); }
+
+html.dark .pv-card-price-badge,
+.dark .pv-card-price-badge { background: #1e1e1e; color: #34d399; }
+
+html.dark .pv-card-img-link,
+.dark .pv-card-img-link { color: rgba(255, 255, 255, 0.3); }
+
+html.dark .pv-card-img-link:hover,
+.dark .pv-card-img-link:hover { color: rgba(255, 255, 255, 0.6); background: rgba(0, 0, 0, 0.3); }
+
+html.dark .pv-card-name,
+.dark .pv-card-name { color: #e5e7eb; }
+
+html.dark .pv-card-desc,
+.dark .pv-card-desc { color: #9ca3af; }
+
+html.dark .pv-card-spec,
+.dark .pv-card-spec { background: rgba(52, 211, 153, 0.08); border-color: rgba(52, 211, 153, 0.15); color: #6ee7b7; }
+
+html.dark .pv-card-actions,
+.dark .pv-card-actions { border-top-color: #333; }
+
+html.dark .pv-card-btn,
+.dark .pv-card-btn { background: #2a2a2a; border-color: #444; color: #d1d5db; }
+
+html.dark .pv-card-btn:hover,
+.dark .pv-card-btn:hover { background: rgba(52, 211, 153, 0.1); border-color: #34d399; color: #34d399; }
+
+html.dark .pv-card-btn-primary,
+.dark .pv-card-btn-primary { background: #10a37f; border-color: #10a37f; color: #fff; }
+
+html.dark .pv-card-btn-primary:hover,
+.dark .pv-card-btn-primary:hover { background: #0d8a6a; }
+
+html.dark .pv-card-btn:last-child,
+.dark .pv-card-btn:last-child { color: #fbbf24; border-color: #78350f; background: rgba(245, 158, 11, 0.08); }
+
+html.dark .pv-card-btn:last-child:hover,
+.dark .pv-card-btn:last-child:hover { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #fcd34d; }
+
+html.dark .pv-card-price-badge,
+.dark .pv-card-price-badge { background: #422006; color: #fbbf24; border-color: #78350f; }
+
+html.dark .pv-compare-bar,
+.dark .pv-compare-bar { border-top-color: #333; }
+
+html.dark .pv-compare-title,
+.dark .pv-compare-title { color: #9ca3af; }
+
+html.dark .pv-compare-chip,
+.dark .pv-compare-chip { background: #252525; border-color: #333; }
+
+html.dark .pv-compare-chip:hover,
+.dark .pv-compare-chip:hover { border-color: #f59e0b; background: rgba(245, 158, 11, 0.06); }
+
+html.dark .pv-compare-chip-name,
+.dark .pv-compare-chip-name { color: #e5e7eb; }
+
+html.dark .pv-compare-chip-price,
+.dark .pv-compare-chip-price { background: #422006; color: #fbbf24; }
 
 /* ========================================
    ANIMATIONS
@@ -296,14 +535,15 @@
   to { opacity: 1; }
 }
 
-@keyframes pvPopIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+@keyframes pvSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pvSlideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes pvFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 163, 127, 0); }
+  25% { box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.3); }
+  75% { box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.1); }
 }
 
 /* ========================================
@@ -311,18 +551,11 @@
    ======================================== */
 
 @media (max-width: 500px) {
-  .pv-product-grid {
+  .pv-card-grid {
     grid-template-columns: 1fr;
   }
 
-  .pv-product-popover {
-    width: 220px;
-    left: 0;
-    transform: translateX(0);
-  }
-
-  .pv-product-popover::after {
-    left: 24px;
-    transform: none;
+  .pv-compare-grid {
+    font-size: 10px;
   }
 }
