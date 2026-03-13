@@ -110,3 +110,26 @@ The landing page introduces the Shop.py concept and explains the shift toward AI
 ### 2. Sign In Using Demo Credentials
 
 Demo credentials are provided for judging:
+
+## Shop.py
+
+### Installation
+ 
+1. Unzip `ShopSmart_v1_5.zip` — you should see a `ShopSmart_v1.3` folder
+2. Open `chrome://extensions`
+3. Toggle on **Developer mode** (top-right)
+4. Click **Load unpacked** → select the `ShopSmart_v1.3` folder
+5. Click the puzzle piece icon in the toolbar and pin **ShopSmart**
+ 
+✅ The extension icon should now appear in your toolbar.
+ 
+### Usage
+ 
+1. Go to ChatGPT
+2. Ask a shopping-related question
+3. Product cards will auto-generate inside the AI response
+4. Click the ShopSmart icon to view captured entries
+5. Use **Export Raw** or **Export Analyzed** to download CSV
+6. Use **Clear** to delete all stored data
+ 
+✅ Entries appear in the dashboard as prompts and responses are detected.
