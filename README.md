@@ -130,7 +130,7 @@ To generate production builds for all packages:
 
 ### What Success Looks Like
 
-Success is achieved when the development servers start without errors and the web application loads in the browser. The frontend should successfully communicate with the backend API, allowing the application interface to render and function as intended.
+✅ Success is achieved when the development servers start without errors and the web application loads in the browser. The frontend should successfully communicate with the backend API, allowing the application interface to render and function as intended.
 
 ---
 
