@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PromptVault",
+  "name": "ShopSmart",
   "version": "1.0",
   "description": "Capture and analyze prompts and responses from AI services.",
   "permissions": ["storage", "activeTab"],
@@ -27,6 +27,6 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "PromptVault"
+    "default_title": "ShopSmart"
   }
 }
