@@ -78,38 +78,14 @@
   if (!config) return;
 
   const service = SERVICE_CONFIGS[config];
-  const captured = new Set();
-
-  // Track the last user prompt so we can check shopping intent
-  // before saving the assistant's response
-  let lastPromptWasShopping = false;
+  const seen = new Set();            // All text we've evaluated (shopping or not)
+  const shoppingPrompts = new Set(); // Prompt texts confirmed as shopping-related
 
   function getTextContent(el) {
     return el?.innerText?.trim() || "";
   }
 
-  function captureEntry(type, text) {
-    if (!text || captured.has(text)) return;
-
-    // ---- SHOPPING FILTER ----
-    if (type === "prompt") {
-      lastPromptWasShopping = isShoppingRelated(text);
-      if (!lastPromptWasShopping) {
-        console.log(`[PromptVault] Skipped non-shopping prompt: "${text.slice(0, 60)}..."`);
-        return;
-      }
-    }
-
-    if (type === "response") {
-      if (!lastPromptWasShopping) {
-        console.log(`[PromptVault] Skipped response (previous prompt wasn't shopping-related)`);
-        return;
-      }
-    }
-    // ---- END SHOPPING FILTER ----
-
-    captured.add(text);
-
+  function saveEntry(type, text) {
     const entry = {
       type,
       text,
@@ -125,13 +101,45 @@
     const prompts = document.querySelectorAll(service.promptSelector);
     const responses = document.querySelectorAll(service.responseSelector);
 
-    // Process prompts first so lastPromptWasShopping is set
-    // before we process the corresponding response
-    prompts.forEach((el) => captureEntry("prompt", getTextContent(el)));
-    responses.forEach((el) => captureEntry("response", getTextContent(el)));
+    // Build ordered list of all prompt texts so we can pair with responses
+    const promptTexts = [];
+
+    prompts.forEach((el) => {
+      const text = getTextContent(el);
+      if (!text) return;
+
+      promptTexts.push(text);
+
+      // Skip if already evaluated
+      if (seen.has(text)) return;
+      seen.add(text);
+
+      if (isShoppingRelated(text)) {
+        shoppingPrompts.add(text);
+        saveEntry("prompt", text);
+        console.log(`[PromptVault] Shopping prompt saved: "${text.slice(0, 60)}..."`);
+      } else {
+        console.log(`[PromptVault] Skipped non-shopping prompt: "${text.slice(0, 60)}..."`);
+      }
+    });
+
+    responses.forEach((el, index) => {
+      const text = getTextContent(el);
+      if (!text || seen.has(text)) return;
+      seen.add(text);
+
+      // Pair response[i] with prompt[i]
+      const matchingPrompt = promptTexts[index];
+
+      if (matchingPrompt && shoppingPrompts.has(matchingPrompt)) {
+        saveEntry("response", text);
+        console.log(`[PromptVault] Shopping response saved (${text.length} chars)`);
+      } else {
+        console.log(`[PromptVault] Skipped response (prompt wasn't shopping-related)`);
+      }
+    });
   }
 
-  // Watch for dynamically added messages
   const observer = new MutationObserver(() => {
     scanPage();
   });
@@ -141,7 +149,6 @@
     subtree: true,
   });
 
-  // Initial scan
   scanPage();
 
   console.log(`[PromptVault] Monitoring ${service.name} (shopping filter active)...`);
