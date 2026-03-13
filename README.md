@@ -103,13 +103,36 @@ The extension also demonstrates how real-world consumer interactions could gener
 
 # How Judges Should Navigate the Application
 
-### 1. Start at the Landing Page
+## ShopSmart
 
-The landing page introduces the Shop.py concept and explains the shift toward AI-driven product discovery.
+### Instructions
 
-### 2. Sign In Using Demo Credentials
+1. **Install dependencies**
 
-Demo credentials are provided for judging:
+`pnpm install`
+
+2. Start the development environment
+
+From the root directory run:
+
+`pnpm dev`
+
+This command starts both the API backend and the web frontend simultaneously.
+
+3. Access the application
+Once the servers start, open your browser and navigate to the local web server URL displayed in the terminal (typically something like 'http://localhost:5173').
+
+4. Build the application (optional)
+
+To generate production builds for all packages:
+
+`pnpm build`
+
+### What Success Looks Like
+
+Success is achieved when the development servers start without errors and the web application loads in the browser. The frontend should successfully communicate with the backend API, allowing the application interface to render and function as intended.
+
+---
 
 ## Shop.py
 
