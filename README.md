@@ -1,7 +1,7 @@
 # ShopSmart
 
 ## Overview
-ShopSmart is a Chrome browser extension that captures and analyzes shopping-related prompts and responses from AI chat platforms such as ChatGPT, Claude, and Perplexity.
+ShopSmart is a Chrome browser extension that captures and analyzes shopping-related prompts and responses from AI chat platforms such as ChatGPT.
 
 The extension monitors AI conversations and detects when users ask for product recommendations. When a relevant interaction occurs, ShopSmart captures the prompt and response, stores the interaction locally, and allows the user to review the information through the extension popup.
 
