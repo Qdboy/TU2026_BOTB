@@ -1,3 +1,7 @@
+Notice: Due to the size of the Shop.py file(s) we were unable to upload it to GitHub and experienced difficulties sharing through Google Drive.
+As of writing this the Google Drive error has been resolved and so Shop.py.zip can be fetched from Tuskegee University's team drive. Our presentation shows a demonstration of Shop.py's capabilities and if you'd like to see how it works for yourself it's been shared with Kevin@hbcubattleofthebrains and Info@hbcubattleofthebrains
+
+
 # Shop.py
 
 Shop.py is a full-stack web application used to collect, analyze and display data falling through the gaps of AI-prompt shopping. It demonstrates a B2B SaaS platform for **Generative Engine Optimization (GEO) analytics**, helping brands understand how visible their products are inside AI-generated shopping and recommendation results.
