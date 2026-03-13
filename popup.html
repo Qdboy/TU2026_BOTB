@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PromptVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #00f5a0;
+      --accent2: #00c8ff;
+      --prompt-color: #ffd166;
+      --response-color: #06d6a0;
+      --text: #e8e8f0;
+      --muted: #5a5a7a;
+      --danger: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 440px;
+      min-height: 560px;
+      max-height: 620px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #0d0d18 0%, #0a0a12 100%);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(0, 245, 160, 0.08);
+      border: 1px solid rgba(0, 245, 160, 0.2);
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.4s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .stat {
+      flex: 1;
+      padding: 10px 16px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .stat:last-child { border-right: none; }
+    .stat:hover { background: rgba(255,255,255,0.03); }
+
+    .stat.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .stat-num {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      line-height: 1;
+    }
+
+    .stat-num.prompts { color: var(--prompt-color); }
+    .stat-num.responses { color: var(--response-color); }
+    .stat-num.total { color: var(--accent2); }
+
+    .stat-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── Filter Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background: rgba(0, 245, 160, 0.1);
+      border-color: rgba(0, 245, 160, 0.3);
+      color: var(--accent);
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+
+    /* ── Entry List ── */
+    .entries-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .entries-container::-webkit-scrollbar { width: 4px; }
+    .entries-container::-webkit-scrollbar-track { background: transparent; }
+    .entries-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry:hover {
+      border-color: var(--muted);
+      background: #15151f;
+    }
+
+    .entry::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+
+    .entry.prompt::before { background: var(--prompt-color); }
+    .entry.response::before { background: var(--response-color); }
+
+    .entry-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .entry-type {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-family: 'Space Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .entry.prompt .entry-type {
+      background: rgba(255, 209, 102, 0.12);
+      color: var(--prompt-color);
+    }
+
+    .entry.response .entry-type {
+      background: rgba(6, 214, 160, 0.12);
+      color: var(--response-color);
+    }
+
+    .entry-service {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .entry-time {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: auto;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .entry-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      opacity: 0.85;
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--muted);
+      text-align: center;
+      gap: 10px;
+    }
+
+    .empty-icon { font-size: 36px; opacity: 0.4; }
+    .empty-title { font-size: 14px; font-weight: 700; color: var(--text); opacity: 0.5; }
+    .empty-sub { font-size: 11px; line-height: 1.5; max-width: 220px; opacity: 0.6; }
+
+    /* ── Action Bar ── */
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn-export {
+      background: rgba(0, 245, 160, 0.1);
+      border-color: rgba(0, 245, 160, 0.25);
+      color: var(--accent);
+    }
+
+    .btn-export:hover {
+      background: rgba(0, 245, 160, 0.18);
+      border-color: rgba(0, 245, 160, 0.5);
+    }
+
+    .btn-clear {
+      background: rgba(255, 77, 109, 0.08);
+      border-color: rgba(255, 77, 109, 0.2);
+      color: var(--danger);
+    }
+
+    .btn-clear:hover {
+      background: rgba(255, 77, 109, 0.15);
+      border-color: rgba(255, 77, 109, 0.4);
+    }
+
+    /* ── Detail Modal ── */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 100;
+      flex-direction: column;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: calc(100% - 32px);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .modal-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--accent);
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 16px;
+      border-radius: 20px;
+      opacity: 0;
+      transition: all 0.2s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <span class="logo-text">PromptVault</span>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      CAPTURING
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat active" data-filter="all">
+      <div class="stat-num total" id="count-total">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat" data-filter="prompt">
+      <div class="stat-num prompts" id="count-prompts">0</div>
+      <div class="stat-label">Prompts</div>
+    </div>
+    <div class="stat" data-filter="response">
+      <div class="stat-num responses" id="count-responses">0</div>
+      <div class="stat-label">Responses</div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-filter="all">All</button>
+    <button class="tab" data-filter="prompt">Prompts</button>
+    <button class="tab" data-filter="response">Responses</button>
+    <button class="tab" data-filter="ChatGPT">ChatGPT</button>
+    <button class="tab" data-filter="Perplexity">Perplexity</button>
+    <button class="tab" data-filter="Claude">Claude</button>
+  </div>
+
+  <!-- Entries -->
+  <div class="entries-container" id="entries-container">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">Nothing captured yet</div>
+      <div class="empty-sub">Open ChatGPT, Perplexity, or Claude and start a conversation</div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button class="btn btn-export" id="btn-export">⬇ Export CSV</button>
+    <button class="btn btn-clear" id="btn-clear">✕ Clear All</button>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">Entry Detail</span>
+        <button class="modal-close" id="modal-close">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
