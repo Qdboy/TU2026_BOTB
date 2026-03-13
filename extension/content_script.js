@@ -1,6 +1,7 @@
 // PromptVault - Content Script
 // Observes the DOM for prompts and AI responses across supported services
-// MODIFIED: Only captures prompts/responses related to shopping
+// Only captures prompts/responses related to shopping
+// Waits for responses to finish streaming before saving
 
 (function () {
   const SERVICE_CONFIGS = {
@@ -42,6 +43,19 @@
     "where to buy", "where can i get",
   ];
 
+  const PRODUCT_HINTS = [
+    "laptop", "phone", "tablet", "monitor", "headphones", "earbuds",
+    "camera", "tv", "television", "speaker", "keyboard", "mouse",
+    "gpu", "graphics card", "cpu", "processor", "ssd", "ram",
+    "watch", "smartwatch", "fitness tracker",
+    "console", "playstation", "xbox", "switch",
+    "shoes", "sneakers", "boots", "jacket", "backpack", "shirt", "pants",
+    "mattress", "desk", "chair", "office chair", "couch", "sofa",
+    "blender", "microwave", "air fryer", "vacuum",
+    "car", "bike", "scooter", "ebike",
+    "drill", "saw", "tools", "mower",
+  ];
+
   const SHOPPING_PATTERNS = [
     /what('s| is) the best .+ (for|under|around)/i,
     /which .+ should i (buy|get|pick)/i,
@@ -57,18 +71,13 @@
   function isShoppingRelated(text) {
     const lower = text.toLowerCase();
     let score = 0;
-
-    for (const kw of SHOPPING_KEYWORDS) {
-      if (lower.includes(kw)) score += 1;
-    }
-    for (const pattern of SHOPPING_PATTERNS) {
-      if (pattern.test(text)) score += 2;
-    }
-
+    for (const kw of SHOPPING_KEYWORDS) { if (lower.includes(kw)) score += 1; }
+    for (const hint of PRODUCT_HINTS) { if (lower.includes(hint)) score += 2; }
+    for (const pattern of SHOPPING_PATTERNS) { if (pattern.test(text)) score += 2; }
     return score >= 2;
   }
 
-  // ---- Original PromptVault Logic (with shopping filter added) ----
+  // ---- Platform Detection ----
 
   const hostname = window.location.hostname.replace("www.", "");
   const config = Object.keys(SERVICE_CONFIGS).find((key) =>
@@ -78,8 +87,12 @@
   if (!config) return;
 
   const service = SERVICE_CONFIGS[config];
-  const seen = new Set();            // All text we've evaluated (shopping or not)
-  const shoppingPrompts = new Set(); // Prompt texts confirmed as shopping-related
+
+  // Track by DOM element, not text content — prevents streaming spam
+  const seenPromptEls = new WeakSet();
+  const seenResponseEls = new WeakSet();
+  const pendingResponses = new WeakSet(); // Responses waiting to stabilize
+  const shoppingPrompts = new Set();      // Prompt texts confirmed as shopping
 
   function getTextContent(el) {
     return el?.innerText?.trim() || "";
@@ -93,26 +106,34 @@
       url: window.location.href,
       timestamp: new Date().toISOString(),
     };
-
     chrome.runtime.sendMessage({ action: "save_entry", entry });
+  }
+
+  // Wait for an element's content to stop changing (streaming done)
+  function waitForStable(el, stableMs = 1500) {
+    return new Promise((resolve) => {
+      let timeout = setTimeout(() => { obs.disconnect(); resolve(); }, stableMs);
+      const obs = new MutationObserver(() => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => { obs.disconnect(); resolve(); }, stableMs);
+      });
+      obs.observe(el, { childList: true, subtree: true, characterData: true });
+    });
   }
 
   function scanPage() {
     const prompts = document.querySelectorAll(service.promptSelector);
     const responses = document.querySelectorAll(service.responseSelector);
 
-    // Build ordered list of all prompt texts so we can pair with responses
-    const promptTexts = [];
-
+    // Build ordered prompt list for pairing
+    const promptEls = [];
     prompts.forEach((el) => {
       const text = getTextContent(el);
       if (!text) return;
+      promptEls.push({ el, text });
 
-      promptTexts.push(text);
-
-      // Skip if already evaluated
-      if (seen.has(text)) return;
-      seen.add(text);
+      if (seenPromptEls.has(el)) return;
+      seenPromptEls.add(el);
 
       if (isShoppingRelated(text)) {
         shoppingPrompts.add(text);
@@ -124,22 +145,29 @@
     });
 
     responses.forEach((el, index) => {
-      const text = getTextContent(el);
-      if (!text || seen.has(text)) return;
-      seen.add(text);
+      // Skip if already saved or already waiting to stabilize
+      if (seenResponseEls.has(el) || pendingResponses.has(el)) return;
 
-      // Pair response[i] with prompt[i]
-      const matchingPrompt = promptTexts[index];
+      // Check if matching prompt was shopping-related
+      const matchingPrompt = promptEls[index];
+      if (!matchingPrompt || !shoppingPrompts.has(matchingPrompt.text)) return;
 
-      if (matchingPrompt && shoppingPrompts.has(matchingPrompt)) {
-        saveEntry("response", text);
-        console.log(`[PromptVault] Shopping response saved (${text.length} chars)`);
-      } else {
-        console.log(`[PromptVault] Skipped response (prompt wasn't shopping-related)`);
-      }
+      // Mark as pending so we don't start another wait
+      pendingResponses.add(el);
+
+      // Wait for streaming to finish, then save once
+      waitForStable(el).then(() => {
+        const finalText = getTextContent(el);
+        if (!finalText) return;
+
+        seenResponseEls.add(el);
+        saveEntry("response", finalText);
+        console.log(`[PromptVault] Shopping response saved (${finalText.length} chars, final)`);
+      });
     });
   }
 
+  // Watch for new messages
   const observer = new MutationObserver(() => {
     scanPage();
   });

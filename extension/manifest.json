@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PromptVault",
-  "version": "1.0",
-  "description": "Capture and analyze prompts and responses from AI services.",
+  "version": "1.1",
+  "description": "Capture and analyze shopping prompts from AI services with enhanced product UI.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://chatgpt.com/*",
@@ -21,7 +21,8 @@
         "https://www.perplexity.ai/*",
         "https://claude.ai/*"
       ],
-      "js": ["content_script.js"],
+      "js": ["content_script.js", "content_shop_ui.js"],
+      "css": ["shop_ui.css"],
       "run_at": "document_idle"
     }
   ],
